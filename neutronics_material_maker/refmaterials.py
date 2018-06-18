@@ -216,7 +216,7 @@ class EUROfer(MfMaterial):
         https://doi.org/10.1016/j.jnucmat.2007.03.267.
         (http://www.sciencedirect.com/science/article/pii/S0022311507006642)
         '''
-        return 2.696*T-0.004962*T**2+3.335e-6*T**3  # TODO: check first term error?
+        return 2.696*T-0.004962*T**2+3.335e-6*T**3
 
     @staticmethod
     @matproperty(Tmin=CtoK(20), Tmax=CtoK(500))
@@ -698,11 +698,11 @@ class Beryllium(MfMaterial):
 
 
 class H2O(Liquid):
-    symbol = 'H2O'
+    chemical_equation = 'H2O'
 
 
 class Helium(Liquid):
-    symbol = 'He'
+    chemical_equation = 'He'
     T0 = 4.5
     P0 = 6e5
 
