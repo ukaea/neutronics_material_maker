@@ -758,13 +758,20 @@ class test_property(unittest.TestCase):
 
 
 class test_materials(unittest.TestCase):
-    Be = Beryllium()
-    W = Tungsten()
-    S = SS316LN()
-    N = Nb3Sn()
-    N_2 = Nb3Sn_2()
-    NT = NbTi()
-    plot = False
+    
+    def __init__(self, *args, **kwargs):
+        self.Be = Beryllium()
+        self.W = Tungsten()
+        self.S = SS316LN()
+        self.N = Nb3Sn()
+        self.N_2 = Nb3Sn_2()
+        self.NT = NbTi()
+        self.plot = False
+        super().__init__(*args, **kwargs)
+        self.addCleanup(self.cleaner)
+
+    def cleaner(self):
+        del self.Be, self.W, self.S, self.N, self.N_2, self.NT
 
     def test_density_load(self):
         self.Be.density_g_per_cm3 = None  # Force raise
@@ -828,16 +835,21 @@ class test_materials(unittest.TestCase):
 
 
 class test_liquids(unittest.TestCase):
-    H = H2O()
+
+    def setUp(self):
+        self.H = H2O()
 
     def test_TP(self):
-        self.assertTrue(self.H.T == 293.15)
+        self.assertTrue(self.H.T == 293.15, msg=self.H.T)
         self.assertTrue(self.H.P == 101325)
         self.assertTrue(self.H.density == 998.987347802)
         self.H.T, self.H.P = 500, 200000
         s = self.H.material_card('H2O', (0, 1, 2), 'serpent', None)
         s = s.splitlines()[2]
         self.assertTrue(float(s.split(' ')[2][1:]) == self.H.density_g_per_cm3)
+
+    def tearDown(self):
+        del self.H
 
 
 if __name__ is '__main__':
