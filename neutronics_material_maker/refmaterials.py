@@ -152,6 +152,17 @@ class EUROfer(MfMaterial):
           'W': 0.011}
     density = 7870
     brho = 8.43211E-02  # barn/cm
+    
+    def diffusivity(self, T):
+        return self.k(T)/(self.rho(T)*self.Cp(T))
+    
+    @staticmethod
+    @matproperty(Tmin=CtoK(20), Tmax=CtoK(600))
+    def alpha(T:' Kelvin'):
+        T = KtoC(T)
+        cm2tom2 = 10**-4
+        return cm2tom2*(0.08381+6.00691e-6*T-5.09213e-8*T**2)
+        
 
     @staticmethod
     @matproperty(Tmin=0, Tmax=5000)
@@ -234,8 +245,18 @@ class EUROfer(MfMaterial):
         '''
         DEMO_D_2MKKGB v0 Table 20.1
         '''
-        T = KtoC(T)
-        return T*(0.19706-4.3053e-4*T+3.817e-7*T**2-1.158e-0*T**3)
+        t = [20, 50, 100, 200, 300, 400, 500, 600]
+        a = [28.08, 28.86, 29.78, 30.38, 30.01, 29.47, 29.58, 31.12]
+        return interp1d(CtoK(t), a)(T)
+    
+    @staticmethod
+    @matproperty(Tmin=CtoK(20), Tmax=CtoK(600))
+    def kwrong(T: 'Kelvin'):
+        '''
+        DEMO_D_2MKKGB v0 Table 20.1
+        '''
+        #T = KtoC(T)
+        return T*(0.190706-4.3053e-4*T+3.817e-7*T**2-1.158e-10*T**3)
 
     @staticmethod
     @matproperty(Tmin=CtoK(0), Tmax=CtoK(650))
@@ -758,7 +779,7 @@ class test_property(unittest.TestCase):
 
 
 class test_materials(unittest.TestCase):
-    
+
     def __init__(self, *args, **kwargs):
         self.Be = Beryllium()
         self.W = Tungsten()
@@ -853,4 +874,27 @@ class test_liquids(unittest.TestCase):
 
 
 if __name__ is '__main__':
-    unittest.main()
+    #unittest.main()
+    E = EUROfer()
+
+    t = np.linspace(300, 800)
+    alpha = E.alpha(t)
+    diff = E.diffusivity(t)
+    tt = np.linspace(293.15, 873.15)
+    k = E.k(tt)
+    kwrong = E.kwrong(tt)
+    f, ax = plt.subplots()
+    ax.plot(t, alpha, label='alpha_equation')
+    ax.plot(t, diff, label='diffusivity = k/$C_{p}\\rho$')
+    ax.set_ylabel('$\\alpha$ [$m^{2}$/s]')
+    ax.set_xlabel('T [K]')
+    ax.legend()
+    f, ax = plt.subplots()
+    t = np.array([20, 50, 100, 200, 300, 400, 500, 600])+273.15
+    a = [28.08, 28.86, 29.78, 30.38, 30.01, 29.47, 29.58, 31.12]
+    ax.plot(tt, k, ls='--', label='k_linear_interp')
+    ax.plot(tt, kwrong, label='k_equation (Kelvin)')
+    ax.plot(t, a, 's', label='data', marker='o', ms=12)
+    ax.set_ylabel('$k$ [W/mK]')
+    ax.set_xlabel('$T$ [K]')
+    ax.legend()
