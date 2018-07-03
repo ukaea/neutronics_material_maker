@@ -17,6 +17,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
+
 class DTPlasma(Material):
     name = 'DT Plasma'
     def __init__(self, rho_barns_cm2=1e20):
@@ -869,6 +870,7 @@ class test_liquids(unittest.TestCase):
         s = s.splitlines()[2]
         self.assertTrue(float(s.split(' ')[2][1:]) == self.H.density_g_per_cm3)
 
+
     def tearDown(self):
         del self.H
 
@@ -898,3 +900,4 @@ if __name__ is '__main__':
     ax.set_ylabel('$k$ [W/mK]')
     ax.set_xlabel('$T$ [K]')
     ax.legend()
+
