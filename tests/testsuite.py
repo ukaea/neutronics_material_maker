@@ -21,6 +21,7 @@ from tests.module_tests import Material_tests
 from tests.module_tests import Compound_tests
 from tests.module_tests import Homogenised_mixture_tests
 from tests.module_tests import Example_materials_tests
+from neutronics_material_maker.refmaterials import *
 
 def main():
     unittest.TextTestRunner(verbosity=3).run(unittest.TestSuite())

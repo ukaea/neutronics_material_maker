@@ -376,18 +376,20 @@ class Liquid(Compound):
     :param: T [K]
     :param: P [Pa]
     '''
-    symbol = None
+    chemical_equation = None
     T0 = 293.15  # Default temperature for all liquids [K]
     P0 = 101325  # Default pressure for all liquids [Pa]
 
-    def __init__(self):
-        super().__init__(self.symbol, state_of_matter='liquid',
-                         temperature_K=self.T0, pressure_Pa=self.P0)
+    def __init__(self, **kwargs):
+        self.T0 = kwargs.get('T', self.T0)
+        self.P0 = kwargs.get('P', self.P0)
         try:  # Set density if a rho property exists
             self.density = self.rho(self.T0, self.P0)
-            self.density_g_per_cm3 = kgm3togcm3(self.density)
         except NotImplementedError:
-            pass
+            if self.density is None:
+                raise ValueError('No density (value or T-function) specified.')
+        super().__init__(self.chemical_equation, state_of_matter='liquid',
+                         temperature_K=self.T0, pressure_Pa=self.P0)
 
     def rho(self, T, P):
         return Chemical(self.chemical_equation, T=T, P=P).rho

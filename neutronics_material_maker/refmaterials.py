@@ -153,6 +153,17 @@ class EUROfer(MfMaterial):
           'W': 0.011}
     density = 7870
     brho = 8.43211E-02  # barn/cm
+    
+    def diffusivity(self, T):
+        return self.k(T)/(self.rho(T)*self.Cp(T))
+    
+    @staticmethod
+    @matproperty(Tmin=CtoK(20), Tmax=CtoK(600))
+    def alpha(T:' Kelvin'):
+        T = KtoC(T)
+        cm2tom2 = 10**-4
+        return cm2tom2*(0.08381+6.00691e-6*T-5.09213e-8*T**2)
+        
 
     @staticmethod
     @matproperty(Tmin=0, Tmax=5000)
@@ -217,7 +228,7 @@ class EUROfer(MfMaterial):
         https://doi.org/10.1016/j.jnucmat.2007.03.267.
         (http://www.sciencedirect.com/science/article/pii/S0022311507006642)
         '''
-        return 2.696*T-0.004962*T**2+3.335e-6*T**3  # TODO: check first term error?
+        return 2.696*T-0.004962*T**2+3.335e-6*T**3
 
     @staticmethod
     @matproperty(Tmin=CtoK(20), Tmax=CtoK(500))
@@ -235,8 +246,18 @@ class EUROfer(MfMaterial):
         '''
         DEMO_D_2MKKGB v0 Table 20.1
         '''
-        T = KtoC(T)
-        return T*(0.19706-4.3053e-4*T+3.817e-7*T**2-1.158e-0*T**3)
+        t = [20, 50, 100, 200, 300, 400, 500, 600]
+        a = [28.08, 28.86, 29.78, 30.38, 30.01, 29.47, 29.58, 31.12]
+        return interp1d(CtoK(t), a)(T)
+    
+    @staticmethod
+    @matproperty(Tmin=CtoK(20), Tmax=CtoK(600))
+    def kwrong(T: 'Kelvin'):
+        '''
+        DEMO_D_2MKKGB v0 Table 20.1
+        '''
+        #T = KtoC(T)
+        return T*(0.190706-4.3053e-4*T+3.817e-7*T**2-1.158e-10*T**3)
 
     @staticmethod
     @matproperty(Tmin=CtoK(0), Tmax=CtoK(650))
@@ -699,11 +720,11 @@ class Beryllium(MfMaterial):
 
 
 class H2O(Liquid):
-    symbol = 'H2O'
+    chemical_equation = 'H2O'
 
 
 class Helium(Liquid):
-    symbol = 'He'
+    chemical_equation = 'He'
     T0 = 4.5
     P0 = 6e5
 
@@ -759,13 +780,20 @@ class test_property(unittest.TestCase):
 
 
 class test_materials(unittest.TestCase):
-    Be = Beryllium()
-    W = Tungsten()
-    S = SS316LN()
-    N = Nb3Sn()
-    N_2 = Nb3Sn_2()
-    NT = NbTi()
-    plot = False
+
+    def __init__(self, *args, **kwargs):
+        self.Be = Beryllium()
+        self.W = Tungsten()
+        self.S = SS316LN()
+        self.N = Nb3Sn()
+        self.N_2 = Nb3Sn_2()
+        self.NT = NbTi()
+        self.plot = False
+        super().__init__(*args, **kwargs)
+        self.addCleanup(self.cleaner)
+
+    def cleaner(self):
+        del self.Be, self.W, self.S, self.N, self.N_2, self.NT
 
     def test_density_load(self):
         self.Be.density_g_per_cm3 = None  # Force raise
@@ -829,10 +857,12 @@ class test_materials(unittest.TestCase):
 
 
 class test_liquids(unittest.TestCase):
-    H = H2O()
+
+    def setUp(self):
+        self.H = H2O()
 
     def test_TP(self):
-        self.assertTrue(self.H.T == 293.15)
+        self.assertTrue(self.H.T == 293.15, msg=self.H.T)
         self.assertTrue(self.H.P == 101325)
         self.assertTrue(self.H.density == 998.987347802)
         self.H.T, self.H.P = 500, 200000
@@ -840,6 +870,34 @@ class test_liquids(unittest.TestCase):
         s = s.splitlines()[2]
         self.assertTrue(float(s.split(' ')[2][1:]) == self.H.density_g_per_cm3)
 
-#
-#if __name__ is '__main__':
-unittest.main()
+
+    def tearDown(self):
+        del self.H
+
+
+if __name__ is '__main__':
+    #unittest.main()
+    E = EUROfer()
+
+    t = np.linspace(300, 800)
+    alpha = E.alpha(t)
+    diff = E.diffusivity(t)
+    tt = np.linspace(293.15, 873.15)
+    k = E.k(tt)
+    kwrong = E.kwrong(tt)
+    f, ax = plt.subplots()
+    ax.plot(t, alpha, label='alpha_equation')
+    ax.plot(t, diff, label='diffusivity = k/$C_{p}\\rho$')
+    ax.set_ylabel('$\\alpha$ [$m^{2}$/s]')
+    ax.set_xlabel('T [K]')
+    ax.legend()
+    f, ax = plt.subplots()
+    t = np.array([20, 50, 100, 200, 300, 400, 500, 600])+273.15
+    a = [28.08, 28.86, 29.78, 30.38, 30.01, 29.47, 29.58, 31.12]
+    ax.plot(tt, k, ls='--', label='k_linear_interp')
+    ax.plot(tt, kwrong, label='k_equation (Kelvin)')
+    ax.plot(t, a, 's', label='data', marker='o', ms=12)
+    ax.set_ylabel('$k$ [W/mK]')
+    ax.set_xlabel('$T$ [K]')
+    ax.legend()
+
