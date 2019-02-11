@@ -45,7 +45,7 @@ def set_xsdir(xsdir_file_path):
      #   print('Setting all nuclear library extensions to blank entries')
 
 
-#set_xsdir('/opt/serpent2/xsdir.serp')
+set_xsdir('/opt/serpent2/xsdir.serp')
 
 
 def find_prefered_library(zaid):
@@ -64,20 +64,28 @@ def calculate_zaid(z, a):
 
 
 class Base(object):
-    def material_card_header(
-            self,
-            material_card_comment,
-            material_card_name,
-            material_card_number,
-            color,
-            code,
-            fractions,
-            temperature_K,
-            volume_cm3,
-            **kwargs):
+    def material_card_header(self,
+                             material_card_comment,
+                             material_card_name,
+                             material_card_number,
+                             color,
+                             code,
+                             fractions,
+                             temperature_K,
+                             volume_cm3,
+                             doppler_broadening=False,
+                             **kwargs):
 
-        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3 = self.kwarg_handler(
-            material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3)
+        (material_card_comment, material_card_name, material_card_number,
+         color, code, fractions, fractions_prefix, comment, end_comment,
+         temperature_K, volume_cm3) = self.kwarg_handler(material_card_comment,
+                                                         material_card_name,
+                                                         material_card_number,
+                                                         color,
+                                                         code, 
+                                                         fractions, 
+                                                         temperature_K,
+                                                         volume_cm3)
         if self.density_g_per_cm3 is None and self.density_atoms_per_barn_per_cm is None:
             raise ValueError('To produce a material card the '
                              'density_g_per_cm3 or '
@@ -97,6 +105,8 @@ class Base(object):
                 tmp = ' tmp ' + str(temperature_K) + ' '
             #for i in [comment, comment + material_card_comment,'mat ' + material_card_name + density + tmp + color]:
                 #print(type(i),i)
+            if not doppler_broadening:
+                tmp = ''  # Overwrite T if Doppler broadening not desired
             mat_card = [comment, comment + material_card_comment,
                         'mat ' + material_card_name + density + tmp + color]
         elif code == 'mcnp':
