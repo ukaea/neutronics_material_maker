@@ -33,7 +33,7 @@ def set_xsdir(xsdir_file_path):
 
 
     filecontents = open(xsdir_file_path, "r").readlines()
-    print('xsdir file ',xsdir_file_path,' read in ')
+    #print('xsdir file ',xsdir_file_path,' read in ')
     for line in filecontents:
         # chopped_up_line = line.split()[0].split('.')
         match = re.search("[0-9]{1,}.[0-9]{1,}[aA-zZ]\s{1,}", line)
@@ -44,8 +44,10 @@ def set_xsdir(xsdir_file_path):
     #    print('Warning xsdir file not found in default path /opt/serpent/xsdir.serp')
      #   print('Setting all nuclear library extensions to blank entries')
 
-
-set_xsdir('/opt/serpent2/xsdir.serp')
+try:
+    set_xsdir('/opt/serpent2/xsdir.serp')
+except FileNotFoundError:
+    print('No xsdir found.')
 
 
 def find_prefered_library(zaid):
@@ -73,19 +75,20 @@ class Base(object):
                              fractions,
                              temperature_K,
                              volume_cm3,
-                             doppler_broadening=False,
+                             doppler,
                              **kwargs):
 
         (material_card_comment, material_card_name, material_card_number,
          color, code, fractions, fractions_prefix, comment, end_comment,
-         temperature_K, volume_cm3) = self.kwarg_handler(material_card_comment,
+         temperature_K, volume_cm3, doppler) = self.kwarg_handler(material_card_comment,
                                                          material_card_name,
                                                          material_card_number,
                                                          color,
                                                          code, 
                                                          fractions, 
                                                          temperature_K,
-                                                         volume_cm3)
+                                                         volume_cm3,
+                                                         doppler)
         if self.density_g_per_cm3 is None and self.density_atoms_per_barn_per_cm is None:
             raise ValueError('To produce a material card the '
                              'density_g_per_cm3 or '
@@ -105,7 +108,7 @@ class Base(object):
                 tmp = ' tmp ' + str(temperature_K) + ' '
             #for i in [comment, comment + material_card_comment,'mat ' + material_card_name + density + tmp + color]:
                 #print(type(i),i)
-            if not doppler_broadening:
+            if not doppler:
                 tmp = ''  # Overwrite T if Doppler broadening not desired
             mat_card = [comment, comment + material_card_comment,
                         'mat ' + material_card_name + density + tmp + color]
@@ -220,7 +223,8 @@ class Base(object):
             code,
             fractions,
             temperature_K,
-            volume_cm3):
+            volume_cm3,
+            doppler):
         if material_card_name is None:
             material_card_name = self.material_card_name
         if material_card_name is None:
@@ -253,6 +257,9 @@ class Base(object):
             if code == 'fispact' and volume_cm3 is None:
                 raise ValueError('To produce a fispact material card the '
                                  'volume_cm3 must be provided')
+        
+        if doppler is None:
+            doppler = False
 
         if code is None or code == 'serpent':
             code = 'serpent'
@@ -267,7 +274,9 @@ class Base(object):
             comment = '<< '
             code = 'fispact'
 
-        return material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3
+        return (material_card_comment, material_card_name,
+                material_card_number, color, code, fractions, fractions_prefix,
+                comment, end_comment, temperature_K, volume_cm3, doppler)
 
 
 class Isotope(Base):
@@ -438,7 +447,8 @@ class Isotope(Base):
             color=None,
             code=None,
             temperature_K=None,
-            volume_cm3=None):
+            volume_cm3=None,
+            doppler=None):
         mat_card = super(
             Isotope,
             self).material_card_header(
@@ -449,9 +459,16 @@ class Isotope(Base):
             code,
             fractions,
             temperature_K,
-            volume_cm3)
-        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3 = super(
-            Isotope, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3)
+            volume_cm3,
+            doppler)
+        (material_card_comment, material_card_name, material_card_number,
+         color, code, fractions, fractions_prefix, comment, end_comment,
+         temperature_K, volume_cm3, doppler) = super(Isotope, self).kwarg_handler(material_card_comment,
+                                                    material_card_name, 
+                                                    material_card_number,
+                                                    color, code, fractions,
+                                                    temperature_K, volume_cm3,
+                                                    doppler)
 
         if code == 'mcnp' or code == 'serpent':
             if fractions == 'isotope atom fractions':
@@ -591,7 +608,8 @@ class Element(Base):
             code=None,
             fractions=None,
             temperature_K=None,
-            volume_cm3=None):
+            volume_cm3=None,
+            doppler=None):
 
         mat_card = super(
             Element,
@@ -603,9 +621,10 @@ class Element(Base):
             code,
             fractions,
             temperature_K,
-            volume_cm3)
-        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3 = super(
-            Element, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3)
+            volume_cm3,
+            doppler)
+        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3, doppler = super(
+            Element, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3, doppler)
 
         if code == 'mcnp' or code == 'serpent':
             if fractions == 'isotope atom fractions':
@@ -787,7 +806,8 @@ class Material(Base):
             code=None,
             fractions=None,
             temperature_K=None,
-            volume_cm3=None):
+            volume_cm3=None,
+            doppler=None):
 
         mat_card = super(
             Material,
@@ -799,9 +819,10 @@ class Material(Base):
             code,
             fractions,
             temperature_K,
-            volume_cm3)
-        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3 = super(
-            Material, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3)
+            volume_cm3,
+            doppler)
+        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3, doppler = super(
+            Material, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3, doppler)
 
         if code == 'serpent' or code == 'mcnp':
             if fractions == 'isotope atom fractions':
@@ -948,7 +969,8 @@ class Compound(Base):
             code=None,
             fractions=None,
             temperature_K=None,
-            volume_cm3=None):
+            volume_cm3=None,
+            doppler=None):
 
         mat_card = super(
             Compound,
@@ -960,9 +982,10 @@ class Compound(Base):
             code,
             fractions,
             temperature_K,
-            volume_cm3)
-        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3 = super(
-            Compound, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3)
+            volume_cm3,
+            doppler)
+        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3, doppler = super(
+            Compound, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3, doppler)
 
         if code == 'mcnp' or code == 'serpent':
 
@@ -1333,7 +1356,8 @@ class Homogenised_mixture(Base):
             code=None,
             squashed=False,
             temperature_K=None,
-            volume_cm3=None):
+            volume_cm3=None,
+            doppler=None):
 
         mat_card_printed = super(
             Homogenised_mixture,
@@ -1345,9 +1369,10 @@ class Homogenised_mixture(Base):
             code,
             fractions,
             temperature_K,
-            volume_cm3)
-        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3 = super(
-            Homogenised_mixture, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3)
+            volume_cm3,
+            doppler)
+        material_card_comment, material_card_name, material_card_number, color, code, fractions, fractions_prefix, comment, end_comment, temperature_K, volume_cm3, doppler = super(
+            Homogenised_mixture, self).kwarg_handler(material_card_comment, material_card_name, material_card_number, color, code, fractions, temperature_K, volume_cm3, doppler)
 
         mat_card = []
         if code == 'fispact':

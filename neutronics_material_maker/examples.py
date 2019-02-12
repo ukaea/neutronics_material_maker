@@ -9,16 +9,13 @@ mat_Li4SiO4 = Compound('Li4SiO4',
                        packing_fraction=0.6,
                        enriched_isotopes=[Isotope('Li', 7, abundance=0.6),
                                           Isotope('Li', 6, abundance=0.4)])
-#print(type(mat_Li4SiO4.material_card()))
-
 
 mat_Li2SiO3 = Compound('Li2SiO3',
                        volume_of_unit_cell_cm3=0.23632e-21,
                        atoms_per_unit_cell=4,
                        packing_fraction=0.6,
                        enriched_isotopes=[Isotope('Li', 7, abundance=0.6),
-                                          Isotope('Li',6,abundance=0.4)])
-#print(mat_Li2SiO3.material_card())
+                                          Isotope('Li', 6, abundance=0.4)])
 
 mat_Li2ZrO3 = Compound('Li2ZrO3',
                        volume_of_unit_cell_cm3=0.24479e-21,
@@ -26,14 +23,14 @@ mat_Li2ZrO3 = Compound('Li2ZrO3',
                        packing_fraction=0.6,
                        enriched_isotopes=[Isotope('Li', 7, abundance=0.6),
                                           Isotope('Li', 6, abundance=0.4)])
-#print(mat_Li2ZrO3.material_card())
 
 
 mat_Li2TiO3 = Compound('Li2TiO3',
                        volume_of_unit_cell_cm3=0.42701e-21,
                        atoms_per_unit_cell=8,
                        packing_fraction=0.6,
-                       enriched_isotopes=[Isotope('Li',7,abundance=0.6),Isotope('Li',6,abundance=0.4)])
+                       enriched_isotopes=[Isotope('Li', 7, abundance=0.6),
+                                          Isotope('Li', 6, sabundance=0.4)])
 #print(mat_Li2TiO3.material_card())
 
 
