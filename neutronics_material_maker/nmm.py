@@ -1413,7 +1413,7 @@ class Homogenised_mixture(Base):
                     mat_card.append({'string': comment + 'with a density of ' + \
                                     str(mixture.density_g_per_cm3) + ' g per cm3'})
                     mat_card.append(
-                        {'string': comment + 'packing fraction of ' + str(mixture.packing_fraction)})
+                        {'string': comment + 'packing fraction of ' + str(self.packing_fraction)})
                     mat_card.append(
                         {'string': comment + 'volume fraction of ' + str(mix_v_f)})
                     mat_card.append(
