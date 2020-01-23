@@ -46,6 +46,10 @@ The material composition impacts the transport of neutrons and photons through t
 
 Neutronics material maker is available here on the git repository or via the python package index.
 
+- Use pip install and specify the version number, [future versions](https://github.com/ukaea/neutronics_material_maker/tree/openmc_version) are OpenMC focused instead of Serpent and MCNP.
+```sh
+pip install neutronics_material_maker==0.1233.1 
+```
 
 - Install the latest package by cloning this git repository and install locally.
 ```sh
