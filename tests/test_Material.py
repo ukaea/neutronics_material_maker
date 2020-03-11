@@ -32,6 +32,24 @@ from neutronics_material_maker import Material
 
 class test_object_properties(unittest.TestCase):
 
+        def test_material_with_isotopes_creation(self):
+
+                test_material = Material('D2O')
+
+                assert len(test_material.isotope_numbers) == len(test_material.isotope_symbols)
+                assert test_material.isotope_symbols == {'H2', 'O16', 'O17'}
+                assert test_material.isotopes['H2'] == 2.0
+                assert test_material.isotopes['O16'] == 0.99962
+                assert test_material.isotopes['O17'] == 0.00038
+
+                test_material = Material('DT_plasma')
+
+                assert len(test_material.isotope_numbers) == len(test_material.isotope_symbols)
+                assert test_material.isotope_symbols == {'H2', 'H3'}
+                assert test_material.isotopes['H2'] == 0.5
+                assert test_material.isotopes['H3'] == 0.5
+
+
         def test_material_creation_from_chemical_formula(self):
 
                 lead_fraction = 0.3
@@ -88,9 +106,6 @@ class test_object_properties(unittest.TestCase):
 
         def test_density_of_crystals(self):
 
-                # these tests fail because the density value is too far away from calculated value
-                # however, this could be becuase the density values are rounded to 2 dp
-
                 test_material = Material(material_name="Li4SiO4")
                 assert test_material.neutronics_material.density == pytest.approx(2.32, rel=0.01)
 
@@ -134,68 +149,11 @@ class test_object_properties(unittest.TestCase):
                 assert test_material.neutronics_material.density > test_material_enriched.neutronics_material.density
 
 
-
         def test_density_of_packed_crystals(self): 
 
                 test_material = Material(material_name="Li4SiO4")
                 test_material_packed = Material(material_name="Li4SiO4", packing_fraction=0.35)
                 assert test_material.neutronics_material.density * 0.35 == test_material_packed.neutronics_material.density
-
-
-
-        def test_material_creation_from_chemical_formula(self):
-
-                lead_fraction = 0.3
-                lithium_fraction = 0.7
-
-                lithium_lead_elements = 'Li'+str(lithium_fraction) +'Pb'+str(lead_fraction)
-                test_material = Material('lithium-lead',
-                                         elements=lithium_lead_elements,
-                                         temperature_in_C=450)
-                nucs = test_material.neutronics_material.nuclides
-                pb_atom_count = 0
-                li_atom_count = 0
-                for entry in nucs:
-                        if entry[0].startswith('Pb'):
-                                pb_atom_count = pb_atom_count+ entry[1]
-                        if entry[0].startswith('Li'):
-                                li_atom_count = li_atom_count+ entry[1]
-                assert pb_atom_count == lead_fraction
-                assert li_atom_count == lithium_fraction
-
-        def test_material_creation_from_chemical_formula_with_enrichment(self):
-
-                lead_fraction = 0.3
-                lithium_fraction = 0.7
-                enrichment = 20
-
-                lithium_lead_elements = 'Li'+str(lithium_fraction) +'Pb'+str(lead_fraction)
-                test_material = Material('lithium-lead',
-                                         enrichment=enrichment,
-                                         enrichment_target='Li6',
-                                         enrichment_type='ao',
-                                         elements=lithium_lead_elements,
-                                         temperature_in_C=450)
-                nucs = test_material.neutronics_material.nuclides
-                pb_atom_count = 0
-                li_atom_count = 0
-                li6_atom_count = 0
-                li7_atom_count = 0
-                for entry in nucs:
-                        if entry[0].startswith('Pb'):
-                                pb_atom_count = pb_atom_count+ entry[1]
-                        if entry[0].startswith('Li'):
-                                li_atom_count = li_atom_count+ entry[1]
-                        if entry[0] == 'Li6':
-                                li6_atom_count = li6_atom_count+ entry[1]
-                        if entry[0] == 'Li7':
-                                li7_atom_count = li7_atom_count+ entry[1]
-                print(nucs)
-                assert pb_atom_count == lead_fraction
-                assert li_atom_count == lithium_fraction
-                # assert li6_atom_count*5. == li7_atom_count #todo use approximatly
-                assert li6_atom_count == pytest.approx(enrichment * lithium_fraction /100, rel=0.01)
-                assert li7_atom_count == pytest.approx((100.-enrichment) * lithium_fraction /100, rel=0.01)
 
 
 
