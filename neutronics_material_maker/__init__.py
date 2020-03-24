@@ -1,1 +1,2 @@
-# intentionally blank
+from .material_maker_classes import Material, MultiMaterial
+
