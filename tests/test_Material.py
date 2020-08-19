@@ -1,10 +1,10 @@
 """
-This file is part of PARAMAK which is a design tool capable 
-of creating 3D CAD models compatible with automated neutronics 
+This file is part of PARAMAK which is a design tool capable
+of creating 3D CAD models compatible with automated neutronics
 analysis.
 
-PARAMAK is released under GNU General Public License v3.0. 
-Go to https://github.com/Shimwell/paramak/blob/master/LICENSE 
+PARAMAK is released under GNU General Public License v3.0.
+Go to https://github.com/Shimwell/paramak/blob/master/LICENSE
 for full license details.
 
 This program is free software: you can redistribute it and/or modify
@@ -36,10 +36,12 @@ class test_object_properties(unittest.TestCase):
         lead_fraction = 3
         lithium_fraction = 7
 
-        lithium_lead_elements = "Li" + str(lithium_fraction) + "Pb" + str(lead_fraction)
+        lithium_lead_elements = "Li" + \
+            str(lithium_fraction) + "Pb" + str(lead_fraction)
         test_material = Material(
-            "lithium-lead", elements=lithium_lead_elements, temperature_in_C=450
-        )
+            "lithium-lead",
+            elements=lithium_lead_elements,
+            temperature_in_C=450)
         nucs = test_material.openmc_material.nuclides
         pb_atom_count = 0
         li_atom_count = 0
@@ -57,7 +59,8 @@ class test_object_properties(unittest.TestCase):
         lithium_fraction = 7
         enrichment = 20
 
-        lithium_lead_elements = "Li" + str(lithium_fraction) + "Pb" + str(lead_fraction)
+        lithium_lead_elements = "Li" + \
+            str(lithium_fraction) + "Pb" + str(lead_fraction)
         test_material = Material(
             "lithium-lead",
             enrichment=enrichment,
@@ -97,37 +100,48 @@ class test_object_properties(unittest.TestCase):
         # however, this could be becuase the density values are rounded to 2 dp
 
         test_material = Material(material_name="Li4SiO4")
-        assert test_material.openmc_material.density == pytest.approx(2.32, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            2.32, rel=0.01)
 
         test_material = Material(material_name="Li2SiO3")
-        assert test_material.openmc_material.density == pytest.approx(2.44, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            2.44, rel=0.01)
 
         test_material = Material(material_name="Li2ZrO3")
-        assert test_material.openmc_material.density == pytest.approx(4.03, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            4.03, rel=0.01)
 
         test_material = Material(material_name="Li2TiO3")
-        assert test_material.openmc_material.density == pytest.approx(3.34, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            3.34, rel=0.01)
 
         test_material = Material(material_name="Li8PbO6")
-        assert test_material.openmc_material.density == pytest.approx(4.14, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            4.14, rel=0.01)
 
         test_material = Material(material_name="Be")
-        assert test_material.openmc_material.density == pytest.approx(1.88, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            1.88, rel=0.01)
 
         test_material = Material(material_name="Be12Ti")
-        assert test_material.openmc_material.density == pytest.approx(2.28, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            2.28, rel=0.01)
 
         test_material = Material(material_name="Ba5Pb3")
-        assert test_material.openmc_material.density == pytest.approx(5.84, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            5.84, rel=0.01)
 
         test_material = Material(material_name="Nd5Pb4")
-        assert test_material.openmc_material.density == pytest.approx(8.79, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            8.79, rel=0.01)
 
         test_material = Material(material_name="Zr5Pb3")
-        assert test_material.openmc_material.density == pytest.approx(8.23, rel=0.01)
+        assert test_material.openmc_material.density == pytest.approx(
+            8.23, rel=0.01)
 
         # test_material = Material(material_name="Zr5Pb4")
-        # assert test_material.openmc_material.density == pytest.approx(#insert)
+        # assert test_material.openmc_material.density ==
+        # pytest.approx(#insert)
 
         #  TODO extra checks for all the crystals needed here
 
@@ -148,7 +162,8 @@ class test_object_properties(unittest.TestCase):
     def test_density_of_packed_crystals(self):
 
         test_material = Material(material_name="Li4SiO4")
-        test_material_packed = Material(material_name="Li4SiO4", packing_fraction=0.35)
+        test_material_packed = Material(
+            material_name="Li4SiO4", packing_fraction=0.35)
         assert (
             test_material.openmc_material.density * 0.35
             == test_material_packed.openmc_material.density
@@ -159,10 +174,12 @@ class test_object_properties(unittest.TestCase):
         lead_fraction = 3
         lithium_fraction = 7
 
-        lithium_lead_elements = "Li" + str(lithium_fraction) + "Pb" + str(lead_fraction)
+        lithium_lead_elements = "Li" + \
+            str(lithium_fraction) + "Pb" + str(lead_fraction)
         test_material = Material(
-            "lithium-lead", elements=lithium_lead_elements, temperature_in_C=450
-        )
+            "lithium-lead",
+            elements=lithium_lead_elements,
+            temperature_in_C=450)
         nucs = test_material.openmc_material.nuclides
         pb_atom_count = 0
         li_atom_count = 0
@@ -171,8 +188,10 @@ class test_object_properties(unittest.TestCase):
                 pb_atom_count = pb_atom_count + entry[1]
             if entry[0].startswith("Li"):
                 li_atom_count = li_atom_count + entry[1]
-        assert pb_atom_count == lead_fraction / (lead_fraction + lithium_fraction)
-        assert li_atom_count == lithium_fraction / (lead_fraction + lithium_fraction)
+        assert pb_atom_count == lead_fraction / \
+            (lead_fraction + lithium_fraction)
+        assert li_atom_count == lithium_fraction / \
+            (lead_fraction + lithium_fraction)
 
     def test_material_creation_from_chemical_formula_with_enrichment(self):
 
@@ -180,7 +199,8 @@ class test_object_properties(unittest.TestCase):
         lithium_fraction = 7
         enrichment = 20
 
-        lithium_lead_elements = "Li" + str(lithium_fraction) + "Pb" + str(lead_fraction)
+        lithium_lead_elements = "Li" + \
+            str(lithium_fraction) + "Pb" + str(lead_fraction)
         test_material = Material(
             "lithium-lead",
             enrichment=enrichment,
@@ -204,8 +224,10 @@ class test_object_properties(unittest.TestCase):
             if entry[0] == "Li7":
                 li7_atom_count = li7_atom_count + entry[1]
         print(nucs)
-        assert pb_atom_count == lead_fraction / (lead_fraction + lithium_fraction)
-        assert li_atom_count == lithium_fraction / (lead_fraction + lithium_fraction)
+        assert pb_atom_count == lead_fraction / \
+            (lead_fraction + lithium_fraction)
+        assert li_atom_count == lithium_fraction / \
+            (lead_fraction + lithium_fraction)
         assert li6_atom_count * 4.0 == pytest.approx(li7_atom_count)
 
         assert li6_atom_count == pytest.approx(
