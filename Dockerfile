@@ -31,8 +31,9 @@ RUN apt-get install -y git
 RUN git clone https://github.com/openmc-dev/data.git
 
 # run script that converts ACE data to hdf5 data
-RUN python data/convert_nndc71.py --cleanup
+RUN wget https://anl.box.com/shared/static/9igk353zpy8fn9ttvtrqgzvw1vtejoz6.xz
+# tar -xf 
+#wget -O example.html
+# ENV OPENMC_CROSS_SECTIONS=/nndc-b7.1-hdf5/cross_sections.xml
 
-ENV OPENMC_CROSS_SECTIONS=/nndc-b7.1-hdf5/cross_sections.xml
-
-RUN pip install-neutronics-material-maker
+# RUN pip install-neutronics-material-maker
