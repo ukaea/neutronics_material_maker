@@ -30,7 +30,7 @@ mat_Li2TiO3 = Compound('Li2TiO3',
                        atoms_per_unit_cell=8,
                        packing_fraction=0.6,
                        enriched_isotopes=[Isotope('Li', 7, abundance=0.6),
-                                          Isotope('Li', 6, sabundance=0.4)])
+                                          Isotope('Li', 6, abundance=0.4)])
 #print(mat_Li2TiO3.material_card())
 
 
