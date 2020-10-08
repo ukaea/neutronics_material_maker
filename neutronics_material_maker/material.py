@@ -3,6 +3,17 @@
 __author__ = "neutronics material maker development team"
 
 
+from neutronics_material_maker import (
+    make_fispact_material,
+    make_serpent_material,
+    make_mcnp_material,
+    AddMaterialFromDir,
+    AddMaterialFromFile,
+    AvailableMaterials,
+    material_dict,
+    zaid_to_isotope,
+)
+from CoolProp.CoolProp import PropsSI
 import asteval
 import os
 import re
@@ -19,23 +30,12 @@ except ImportError:
         "OpenMC python package not found, .openmc_material, .serpent_material, \
             .mcnp_material, .fispact_material methods not avaiable")
 
-from CoolProp.CoolProp import PropsSI
-
-from neutronics_material_maker import (
-    make_fispact_material,
-    make_serpent_material,
-    make_mcnp_material,
-    AddMaterialFromDir,
-    AddMaterialFromFile,
-    AvailableMaterials,
-    material_dict,
-    zaid_to_isotope,
-)
 
 atomic_mass_unit_in_g = 1.660539040e-24
 
 # Set any custom symbols for use in asteval
 asteval_user_symbols = {"PropsSI": PropsSI}
+
 
 def _default(self, obj):
     """ monkey-patches json module so that the custom to_json
