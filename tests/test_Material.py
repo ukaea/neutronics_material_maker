@@ -722,10 +722,11 @@ class test_object_properties(unittest.TestCase):
         assert test_material_in_json_form["temperature_in_C"] == 100
         assert test_material_in_json_form["material_name"] == "H2O"
 
-    def test_restricted_eval(self):
+    @staticmethod
+    def test_restricted_eval():
         """Test that arbitrary commands cannot be injected."""
         with pytest.raises(NameError):
-            test_material = nmm.Material(
+            nmm.Material(
                 "BadMaterial",
                 temperature_in_C=100,
                 pressure_in_Pa=1e6,

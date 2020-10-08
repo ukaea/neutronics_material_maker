@@ -25,9 +25,6 @@ from neutronics_material_maker import (
     make_fispact_material,
     make_serpent_material,
     make_mcnp_material,
-    AddMaterialFromDir,
-    AddMaterialFromFile,
-    AvailableMaterials,
     material_dict,
     zaid_to_isotope,
 )
