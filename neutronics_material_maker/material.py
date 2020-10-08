@@ -3,13 +3,12 @@
 __author__ = "neutronics material maker development team"
 
 
-import asteval
 import os
 import re
 import warnings
-
 from json import JSONEncoder
 
+import asteval
 from CoolProp.CoolProp import PropsSI
 
 from neutronics_material_maker import (
