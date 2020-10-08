@@ -3,23 +3,22 @@
 __author__ = "neutronics material maker development team"
 
 
+import asteval
+import os
+import re
+import warnings
+
+from json import JSONEncoder
+
+from CoolProp.CoolProp import PropsSI
+
 from neutronics_material_maker import (
     make_fispact_material,
     make_serpent_material,
     make_mcnp_material,
-    AddMaterialFromDir,
-    AddMaterialFromFile,
-    AvailableMaterials,
     material_dict,
     zaid_to_isotope,
 )
-from CoolProp.CoolProp import PropsSI
-import asteval
-import os
-import re
-from json import JSONEncoder
-
-import warnings
 
 OPENMC_AVAILABLE = True
 try:
@@ -29,16 +28,6 @@ except ImportError:
     warnings.warn(
         "OpenMC python package not found, .openmc_material, .serpent_material, \
             .mcnp_material, .fispact_material methods not avaiable")
-
-from CoolProp.CoolProp import PropsSI
-
-from neutronics_material_maker import (
-    make_fispact_material,
-    make_serpent_material,
-    make_mcnp_material,
-    material_dict,
-    zaid_to_isotope,
-)
 
 atomic_mass_unit_in_g = 1.660539040e-24
 
