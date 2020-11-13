@@ -14,8 +14,19 @@ import neutronics_material_maker as nmm
 
 class test_object_properties(unittest.TestCase):
     def test_density_of_material_is_set_from_equation(self):
-        test_mat = nmm.Material("FLiBe", temperature_in_K=80, pressure_in_Pa=1)
+        temperature = 80
+        pressure = 1
+        test_mat = nmm.Material(
+            "FLiBe",
+            temperature_in_K=temperature,
+            pressure_in_Pa=pressure,
+        )
         assert test_mat.density is not None
+        density = test_mat.density(
+            temperature_in_K=temperature,
+            pressure_in_Pa=pressure,
+        )
+        assert test_mat.default_density == density
 
     def test_density_of_material_is_set_from_crystal(self):
         test_mat = nmm.Material("Li4SiO4")
@@ -24,6 +35,20 @@ class test_object_properties(unittest.TestCase):
     def test_density_of_material_is_set(self):
         test_mat = nmm.Material("eurofer")
         assert test_mat.density is not None
+
+    def test_density_of_material_from_property(self):
+        """Test the density can be provided via a property."""
+        mat_prop = nmm.Density(value="temperature_in_K * 0.03")
+        test_mat = nmm.Material(
+            material_tag="TestMat",
+            elements={"H": 1},
+            percent_type="ao",
+            density=mat_prop,
+            temperature_in_C=50,
+        )
+        assert test_mat.density is not None
+        calculated_density = (50 + 273.15) * 0.03
+        assert test_mat.default_density == pytest.approx(calculated_density)
 
     def test_material_from_elements(self):
         test_mat = nmm.Material(
@@ -604,6 +629,36 @@ class test_object_properties(unittest.TestCase):
 
         self.assertRaises(ValueError, test_missing_temperature_CO2)
 
+        def test_missing_pressure_He():
+            """checks a ValueError is raised when the pressure is not set"""
+
+            nmm.Material(
+                material_name="He",
+                temperature_in_K=4,
+            )
+
+        self.assertRaises(ValueError, test_missing_pressure_He)
+
+        def test_missing_pressure_H2O():
+            """checks a ValueError is raised when the pressure is not set"""
+
+            nmm.Material(
+                material_name="H2O",
+                temperature_in_K=300,
+            )
+
+        self.assertRaises(ValueError, test_missing_pressure_H2O)
+
+        def test_missing_pressure_CO2():
+            """checks a ValueError is raised when the pressure is not set"""
+
+            nmm.Material(
+                material_name="CO2",
+                temperature_in_K=100,
+            )
+
+        self.assertRaises(ValueError, test_missing_pressure_CO2)
+
         def test_incorrect_material_name_type():
             """checks a ValueError is raised when the temperature is not set"""
 
@@ -879,6 +934,42 @@ class test_object_properties(unittest.TestCase):
 
         self.assertRaises(ValueError, incorrect_setting_for_volume_in_cm3_2)
 
+        def density_not_provided():
+            nmm.Material(material_tag="TestMat", elements={"H": 1}, percent_type="ao")
+        
+        self.assertRaises(ValueError, density_not_provided)
+
+        def default_density_returns_bad_value():
+            nmm.Material(
+                material_tag="TestMat",
+                elements={"H": 1},
+                percent_type="ao",
+                density_equation="array([1])"
+            )
+        
+        self.assertRaises(ValueError, default_density_returns_bad_value)
+
+        def density_uses_bad_property():
+            nmm.Material(
+                material_tag="TestMat",
+                elements={"H": 1},
+                percent_type="ao",
+                density=nmm.MaterialProperty(value=None),
+            )
+        
+        self.assertRaises(ValueError, density_uses_bad_property)
+
+        def density_is_negative():
+            nmm.Material(
+                material_tag="TestMat",
+                elements={"H": 1},
+                percent_type="ao",
+                density_equation="temperature_in_C - 100",
+                temperature_in_C=50,
+            )
+        
+        self.assertRaises(ValueError, density_is_negative)
+
     def test_setting_for_volume_int(self):
         """checks the volume_in_cm3 is set to an int"""
 
@@ -938,6 +1029,15 @@ class test_object_properties(unittest.TestCase):
         assert test_material_in_json_form["pressure_in_Pa"] == 1e6
         assert test_material_in_json_form["temperature_in_C"] == 100
         assert test_material_in_json_form["material_name"] == "H2O"
+
+    def test_json_dump_constant_density(self):
+        test_material = nmm.Material(
+            "FLiNaK", temperature_in_C=100
+        )
+        test_material_in_json_form = test_material.to_json()
+
+        assert test_material_in_json_form["density"] is not None
+        assert test_material_in_json_form["density_equation"] is None
 
     def test_temperature_from_C_in_materials(self):
         """checks that the temperature set in C ends up in the temperature

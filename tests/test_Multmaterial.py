@@ -426,6 +426,26 @@ class test_object_properties(unittest.TestCase):
         assert test_material_in_json_form["percent_type"] == "vo"
         assert test_material_in_json_form["packing_fraction"] == 1.0
 
+    def test_json_dump_equation_density(self):
+        test_material = nmm.MultiMaterial(
+            "test_material",
+            materials=[
+                nmm.Material(
+                    "H2O",
+                    packing_fraction=0.6,
+                    temperature_in_C=305,
+                    pressure_in_Pa=15.5e6
+                ),
+                nmm.Material("eurofer", packing_fraction=0.8),
+            ],
+            fracs=[0.3, 0.7],
+        )
+        test_material_in_json_form = test_material.to_json()
+
+        water_json = test_material_in_json_form["materials"][0]
+        assert water_json["density"] is None
+        assert water_json["density_equation"] is not None
+
     def test_incorrect_settings(self):
         def too_large_fracs():
             """checks a ValueError is raised when the fracs are above 1"""
