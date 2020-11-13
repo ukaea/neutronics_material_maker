@@ -997,7 +997,8 @@ class test_object_properties(unittest.TestCase):
                 "BadMaterial",
                 temperature_in_C=100,
                 pressure_in_Pa=1e6,
-                density_equation="os.system('ls')"
+                density_equation="os.system('ls')",
+                density_unit="g/cm3",
             )
 
 

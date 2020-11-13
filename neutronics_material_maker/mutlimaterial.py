@@ -268,6 +268,14 @@ class MultiMaterial:
 
         materials_list = []
         for material in self.materials:
+            density_val = None
+            density_equation = None
+            if material.density is not None:
+                if isinstance(material.density.value, (float, int)):
+                    density_val = material.density.value
+                elif isinstance(material.density.value, str):
+                    density_equation = material.density.value
+
             materials_list.append(
                 {
                     "material_name": material.material_name,
@@ -279,8 +287,8 @@ class MultiMaterial:
                     "elements": material.elements,
                     "chemical_equation": material.chemical_equation,
                     "isotopes": material.isotopes,
-                    "density": material.density,
-                    "density_equation": material.density_equation,
+                    "density": density_val,
+                    "density_equation": density_equation,
                     "atoms_per_unit_cell": material.atoms_per_unit_cell,
                     "volume_of_unit_cell_cm3": material.volume_of_unit_cell_cm3,
                     "density_unit": material.density_unit,

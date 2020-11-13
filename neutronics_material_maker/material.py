@@ -8,9 +8,6 @@ import re
 import warnings
 from json import JSONEncoder
 
-import asteval
-from CoolProp.CoolProp import PropsSI
-
 from neutronics_material_maker import (
     make_fispact_material,
     make_serpent_material,
@@ -18,6 +15,8 @@ from neutronics_material_maker import (
     material_dict,
     zaid_to_isotope,
 )
+
+from .properties import Density, MaterialProperty
 
 OPENMC_AVAILABLE = True
 try:
@@ -29,9 +28,6 @@ except ImportError:
             .mcnp_material, .fispact_material methods not avaiable")
 
 atomic_mass_unit_in_g = 1.660539040e-24
-
-# Set any custom symbols for use in asteval
-asteval_user_symbols = {"PropsSI": PropsSI}
 
 
 def _default(self, obj):
@@ -121,12 +117,15 @@ class Material:
             e.g. {'Li6': 0.9, 'Li7': 0.1} alternatively zaid representation
             can also be used instead of the symbol e.g. {'3006': 0.9, '4007': 0.1}
         percent_type (str): Atom "ao" or or weight fraction "wo"
-        density (float): value to be used as the density
+        density (float or MaterialProperty): value to be used as the density.
+            If provided as a float then the value will be wrapped by a callable
+            MaterialProperty.
         density_unit (str): the units of density "g/cm3", "g/cc", "kg/m3",
             "atom/b-cm", "atom/cm3"
         density_equation (str): An equation to be evaluated to find the density,
             can contain temperature_in_C, temperature_in_K and pressure_in_Pa
-            variables as part of the equation.
+            variables as part of the equation. The value will be wrapped in the
+            density property as a callable MaterialProperty.
         atoms_per_unit_cell (int): The number of atoms in a unit cell of the
             crystal structure
         volume_of_unit_cell_cm3 (float): The volume of the unit cell in cm3
@@ -172,11 +171,8 @@ class Material:
         self.elements = elements
         self.chemical_equation = chemical_equation
         self.isotopes = isotopes
-        self.density = density
-        self.density_equation = density_equation
         self.atoms_per_unit_cell = atoms_per_unit_cell
         self.volume_of_unit_cell_cm3 = volume_of_unit_cell_cm3
-        self.density_unit = density_unit
         self.percent_type = percent_type
         self.enrichment = enrichment
         self.enrichment_target = enrichment_target
@@ -193,6 +189,30 @@ class Material:
             self.temperature_in_C = temperature_in_C
         if temperature_in_K is not None:
             self.temperature_in_K = temperature_in_K
+
+        # The density can be temperature- or pressure-dependent, so support
+        # evaluation at any temperature or pressure via a callable
+        # MaterialProperty.
+        self.density = None
+        if isinstance(density, MaterialProperty):
+            self.density = density
+        else:
+            # If the density_unit isn't provided then try to get it from the
+            # inbuilt dictionary.
+            if (
+                density_unit is None and
+                self.material_name in material_dict and
+                "density_unit" in material_dict[self.material_name]
+            ):
+                density_unit = material_dict[self.material_name]["density_unit"]
+
+            # If we have been given a density or density_equation then make
+            # the callable property, otherwise we'll try to get it from the
+            # inbuilt dictionary later.
+            if density is not None and density_equation is None:
+                self.density = Density(value=density, unit=density_unit)
+            elif density is None and density_equation is not None:
+                self.density = Density(value=density_equation, unit=density_unit)
 
         # derived values
         self.openmc_material = None
@@ -366,30 +386,8 @@ class Material:
             )
 
     @property
-    def density_equation(self):
-        return self._density_equation
-
-    @density_equation.setter
-    def density_equation(self, value):
-        if value is not None:
-            if not isinstance(value, str):
-                raise ValueError(
-                    "Material.density_equation should be a string")
-        self._density_equation = value
-
-    @property
     def density_unit(self):
-        return self._density_unit
-
-    @density_unit.setter
-    def density_unit(self, value):
-        if value in ["g/cm3", "g/cc", "kg/m3", "atom/b-cm", "atom/cm3", None]:
-            self._density_unit = value
-        else:
-            raise ValueError(
-                "Material.density_unit must be 'g/cm3', 'g/cc', 'kg/m3', \
-                    'atom/b-cm' or 'atom/cm3'"
-            )
+        return self._density.unit
 
     @property
     def percent_type(self):
@@ -473,6 +471,15 @@ class Material:
         self._temperature_in_C = value
 
     @property
+    def default_density(self):
+        """Get the density at the current temperature and pressure of the material."""
+        return self.density(
+            self.temperature_in_C,
+            self.temperature_in_K,
+            self.pressure_in_Pa,
+        )
+
+    @property
     def density(self):
         return self._density
 
@@ -481,9 +488,14 @@ class Material:
         if value is None:
             self._density = value
         else:
-            if value < 0:
+            density_val = value(
+                self.temperature_in_C,
+                self.temperature_in_K,
+                self.pressure_in_Pa,
+            )
+            if density_val < 0:
                 raise ValueError("Material.density should be above 0", value)
-            self._density = float(value)
+            self._density = value
 
     @property
     def enrichment(self):
@@ -715,19 +727,26 @@ class Material:
         ):
             self.isotopes = material_dict[self.material_name]["isotopes"]
 
+        density_unit = None
+        if (
+            self.density is None
+            and "density_unit" in material_dict[self.material_name].keys()
+        ):
+            density_unit = material_dict[self.material_name]["density_unit"]
+
         if (
             self.density is None
             and "density" in material_dict[self.material_name].keys()
         ):
-            self.density = material_dict[self.material_name]["density"]
+            density = material_dict[self.material_name]["density"]
+            self.density = Density(value=density, unit=density_unit)
 
         if (
-            self.density_equation is None
+            self.density is None
             and "density_equation" in material_dict[self.material_name].keys()
         ):
-            self.density_equation = material_dict[self.material_name][
-                "density_equation"
-            ]
+            density_equation = material_dict[self.material_name]["density_equation"]
+            self.density = Density(value=density_equation, unit=density_unit)
 
         if (
             self.atoms_per_unit_cell is None
@@ -744,12 +763,6 @@ class Material:
             self.volume_of_unit_cell_cm3 = material_dict[self.material_name][
                 "volume_of_unit_cell_cm3"
             ]
-
-        if (
-            self.density_unit is None
-            and "density_unit" in material_dict[self.material_name].keys()
-        ):
-            self.density_unit = material_dict[self.material_name]["density_unit"]
 
         if (
             self.percent_type is None
@@ -841,55 +854,44 @@ class Material:
 
     def _add_density(self, openmc_material):
         """Calculates the density of the Material"""
+        if isinstance(self.density, MaterialProperty):
+            density = self.default_density
+            density_unit = self.density.unit
 
-        if not isinstance(self.density, float):
-
-            if self.density is None and self.density_equation is not None:
-
-                aeval = asteval.Interpreter(usersyms=asteval_user_symbols)
-
-                # Potentially used in the eval part
-                aeval.symtable["temperature_in_K"] = self.temperature_in_K
-                aeval.symtable["temperature_in_C"] = self.temperature_in_C
-                aeval.symtable["pressure_in_Pa"] = self.pressure_in_Pa
-
-                density = aeval.eval(self.density_equation)
-
-                if len(aeval.error) > 0:
-                    raise aeval.error[0].exc(aeval.error[0].msg)
-
-                if density is None:
-                    raise ValueError(
-                        "Density value of ",
-                        self.material_name,
-                        " can not be found")
-                else:
-                    self.density = density
-
-            elif (
-                self.atoms_per_unit_cell is not None
-                and self.volume_of_unit_cell_cm3 is not None
-            ):
-
-                molar_mass = (
-                    self._get_atoms_in_crystal() *
-                    openmc_material.average_molar_mass)
-
-                mass = self.atoms_per_unit_cell * molar_mass * atomic_mass_unit_in_g
-
-                self.density = mass / self.volume_of_unit_cell_cm3
-            else:
-
+            if not isinstance(density, (int, float)):
                 raise ValueError(
-                    "density can't be set for "
-                    + str(self.material_name)
-                    + " provide either a density_value, density_equation as a \
-                        string, or atoms_per_unit_cell and \
-                        volume_of_unit_cell_cm3"
-                )
+                    "Density value of ",
+                    self.material_name,
+                    f" resulted in {density}, "
+                    "which is not a real number.")
+
+        elif (
+            self.atoms_per_unit_cell is not None
+            and self.volume_of_unit_cell_cm3 is not None
+        ):
+
+            molar_mass = (
+                self._get_atoms_in_crystal() *
+                openmc_material.average_molar_mass)
+
+            mass = self.atoms_per_unit_cell * molar_mass * atomic_mass_unit_in_g
+
+            density = mass / self.volume_of_unit_cell_cm3
+            density_unit = "g/cm3"
+
+            self.density = Density(value=density, unit=density_unit)
+        else:
+
+            raise ValueError(
+                "density can't be set for "
+                + str(self.material_name)
+                + " provide either a density_value, density_equation as a \
+                    string, or atoms_per_unit_cell and \
+                    volume_of_unit_cell_cm3"
+            )
 
         openmc_material.set_density(
-            self.density_unit, self.density * self.packing_fraction
+            density_unit, density * self.packing_fraction
         )
 
         return openmc_material
@@ -916,6 +918,13 @@ class Material:
         return sum(list_of_fractions)
 
     def to_json(self):
+        density_val = None
+        density_equation = None
+        if self.density is not None:
+            if isinstance(self.density.value, (float, int)):
+                density_val = self.density.value
+            elif isinstance(self.density.value, str):
+                density_equation = self.density.value
 
         jsonified_object = {
             "material_name": self.material_name,
@@ -927,8 +936,8 @@ class Material:
             "elements": self.elements,
             "chemical_equation": self.chemical_equation,
             "isotopes": self.isotopes,
-            "density": self.density,
-            "density_equation": self.density_equation,
+            "density": density_val,
+            "density_equation": density_equation,
             "atoms_per_unit_cell": self.atoms_per_unit_cell,
             "volume_of_unit_cell_cm3": self.volume_of_unit_cell_cm3,
             "density_unit": self.density_unit,
