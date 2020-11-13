@@ -167,8 +167,6 @@ class Material:
 
         self.material_name = material_name
         self.material_tag = material_tag
-        self.temperature_in_C = temperature_in_C
-        self.temperature_in_K = temperature_in_K
         self.pressure_in_Pa = pressure_in_Pa
         self.packing_fraction = packing_fraction
         self.elements = elements
@@ -188,6 +186,13 @@ class Material:
         self.material_id = material_id
         self.decimal_places = decimal_places
         self.volume_in_cm3 = volume_in_cm3
+
+        self._temperature_in_C = None
+        self._temperature_in_K = None
+        if temperature_in_C is not None:
+            self.temperature_in_C = temperature_in_C
+        if temperature_in_K is not None:
+            self.temperature_in_K = temperature_in_K
 
         # derived values
         self.openmc_material = None
@@ -213,31 +218,6 @@ class Material:
                         "Material.enrichment_target and enrichment type are \
                         needed to enrich a material"
                     )
-
-            if "temperature_dependant" in material_dict[self.material_name].keys(
-            ):
-                if temperature_in_K is None and temperature_in_C is None:
-                    if self.material_name == "He":
-                        raise ValueError(
-                            "temperature_in_K or temperature_in_C is needed for",
-                            self.material_name,
-                            ". Typical helium cooled blankets are 400C and 8e6Pa",
-                        )
-                    elif self.material_name == "H2O":
-                        raise ValueError(
-                            "temperature_in_K or temperature_in_C is needed for",
-                            self.material_name,
-                            ". Typical water cooled blankets are 305C and 15.5e6Pa",
-                        )
-                    raise ValueError(
-                        "temperature_in_K or temperature_in_C is needed for",
-                        self.material_name,
-                    )
-                else:
-                    if temperature_in_K is None:
-                        self.temperature_in_K = temperature_in_C + 273.15
-                    if temperature_in_C is None:
-                        self.temperature_in_C = temperature_in_K - 273.15
 
             if "pressure_dependant" in material_dict[self.material_name].keys(
             ):
@@ -478,6 +458,9 @@ class Material:
             if value < 0.0:
                 raise ValueError(
                     "Material.temperature_in_K must be greater than 0")
+            self._temperature_in_C = value - 273.15
+        else:
+            self._temperature_in_C = value
         self._temperature_in_K = value
 
     @property
@@ -491,6 +474,9 @@ class Material:
                 raise ValueError(
                     "Material.temperature_in_C must be greater than -273.15"
                 )
+            self._temperature_in_K = value + 273.15
+        else:
+            self._temperature_in_K = value
         self._temperature_in_C = value
 
     @property
@@ -630,6 +616,33 @@ class Material:
 
         return openmc_material
 
+    def _validate_temperature(self, is_temperature_dependent):
+        """
+        Check that temperature is provided, if needed.
+
+        Args:
+            is_temperature_dependent (bool): True if the material should be
+                treated as temperature dependent.
+        """
+        if is_temperature_dependent:
+            if self.temperature_in_K is None and self.temperature_in_C is None:
+                if self.material_name == "He":
+                    raise ValueError(
+                        "temperature_in_K or temperature_in_C is needed for",
+                        self.material_name,
+                        ". Typical helium cooled blankets are 400C and 8e6Pa",
+                    )
+                elif self.material_name == "H2O":
+                    raise ValueError(
+                        "temperature_in_K or temperature_in_C is needed for",
+                        self.material_name,
+                        ". Typical water cooled blankets are 305C and 15.5e6Pa",
+                    )
+                raise ValueError(
+                    "temperature_in_K or temperature_in_C is needed for",
+                    self.material_name,
+                )
+
     def _populate_from_inbuilt_dictionary(self):
         """This runs on initilisation and if attributes of the Material object
         are not specified (left as None) then the internal material dictionary
@@ -662,6 +675,10 @@ class Material:
             self.temperature_in_K = material_dict[self.material_name][
                 "temperature_in_K"
             ]
+
+        self._validate_temperature(
+            "temperature_dependant" in material_dict[self.material_name]
+        )
 
         if (
             self.pressure_in_Pa is None
