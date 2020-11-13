@@ -10,3 +10,4 @@ from .utils import zaid_to_isotope
 
 from .material import Material
 from .mutlimaterial import MultiMaterial
+from .properties import MaterialProperty, Density
