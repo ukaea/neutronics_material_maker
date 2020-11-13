@@ -212,7 +212,8 @@ class Material:
             if density is not None and density_equation is None:
                 self.density = Density(value=density, unit=density_unit)
             elif density is None and density_equation is not None:
-                self.density = Density(value=density_equation, unit=density_unit)
+                self.density = Density(
+                    value=density_equation, unit=density_unit)
 
         # derived values
         self.openmc_material = None

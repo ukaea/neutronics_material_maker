@@ -935,8 +935,10 @@ class test_object_properties(unittest.TestCase):
         self.assertRaises(ValueError, incorrect_setting_for_volume_in_cm3_2)
 
         def density_not_provided():
-            nmm.Material(material_tag="TestMat", elements={"H": 1}, percent_type="ao")
-        
+            nmm.Material(
+                material_tag="TestMat", elements={
+                    "H": 1}, percent_type="ao")
+
         self.assertRaises(ValueError, density_not_provided)
 
         def default_density_returns_bad_value():
@@ -946,7 +948,7 @@ class test_object_properties(unittest.TestCase):
                 percent_type="ao",
                 density_equation="array([1])"
             )
-        
+
         self.assertRaises(ValueError, default_density_returns_bad_value)
 
         def density_uses_bad_property():
@@ -956,7 +958,7 @@ class test_object_properties(unittest.TestCase):
                 percent_type="ao",
                 density=nmm.MaterialProperty(value=None),
             )
-        
+
         self.assertRaises(ValueError, density_uses_bad_property)
 
         def density_is_negative():
@@ -967,7 +969,7 @@ class test_object_properties(unittest.TestCase):
                 density_equation="temperature_in_C - 100",
                 temperature_in_C=50,
             )
-        
+
         self.assertRaises(ValueError, density_is_negative)
 
     def test_setting_for_volume_int(self):
