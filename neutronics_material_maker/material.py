@@ -219,13 +219,6 @@ class Material:
                         needed to enrich a material"
                     )
 
-            if "pressure_dependant" in material_dict[self.material_name].keys(
-            ):
-                if pressure_in_Pa is None:
-                    raise ValueError(
-                        "pressure_in_Pa is needed for",
-                        self.material_name)
-
         # this populates the density of materials when density is provided by
         # equations and crystal latic information by making the openmc material
         # however it should also be possible to ininitialize nmm.Material
@@ -643,6 +636,18 @@ class Material:
                     self.material_name,
                 )
 
+    def _validate_pressure(self, is_pressure_dependent):
+        """
+        Check that pressure is provided, if needed.
+
+        Args:
+            is_pressure_dependent (bool): True if the material should be
+                treated as pressure dependent.
+        """
+        if is_pressure_dependent and self.pressure_in_Pa is None:
+            raise ValueError(
+                "pressure_in_Pa is needed for ", self.material_name)
+
     def _populate_from_inbuilt_dictionary(self):
         """This runs on initilisation and if attributes of the Material object
         are not specified (left as None) then the internal material dictionary
@@ -685,6 +690,10 @@ class Material:
             and "pressure_in_Pa" in material_dict[self.material_name].keys()
         ):
             self.pressure_in_Pa = material_dict[self.material_name]["pressure_in_Pa"]
+
+        self._validate_pressure(
+            "pressure_dependant" in material_dict[self.material_name]
+        )
 
         if (
             self.packing_fraction is None
