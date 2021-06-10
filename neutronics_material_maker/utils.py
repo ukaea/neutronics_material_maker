@@ -4,6 +4,7 @@ __author__ = "neutronics material maker development team"
 
 import json
 import warnings
+from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Optional
 
@@ -370,10 +371,13 @@ def AddMaterialFromFile(filename: str, verbose: Optional[bool] = True) -> None:
     if verbose:
         print("Added materials to library from", filename)
     with open(filename, "r") as f:
-        new_data = json.load(f)
-        if verbose:
-            print('Added material', list(new_data.keys()))
-        material_dict.update(new_data)
+        try:
+            new_data = json.load(f)
+            if verbose:
+                print('Added material', list(new_data.keys()))
+            material_dict.update(new_data)
+        except JSONDecodeError:
+            print('JSONDecodeError, file not read in', filename)
 
 
 def AvailableMaterials() -> dict:
