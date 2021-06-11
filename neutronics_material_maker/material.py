@@ -18,7 +18,7 @@ from neutronics_material_maker import (NATURAL_ABUNDANCE,
                                        make_fispact_material,
                                        make_mcnp_material,
                                        make_serpent_material,
-                                       make_shift_material, material_dict,
+                                       make_shift_material, material_df,
                                        zaid_to_isotope)
 
 OPENMC_AVAILABLE = True
@@ -857,17 +857,18 @@ class Material:
 
     def from_library(
         name: str,
+        library_name: None,
         **kwargs
     ):
         # TODO allow discreat libraries to be searched library: List('str')
 
-        if name not in material_dict.keys():
+        # if name not in material_dict.keys():
 
-            raise ValueError(
-                'name of ', name, 'not found in the internal library'
-            )
+        #     raise ValueError(
+        #         'name of ', name, 'not found in the internal library'
+        #     )
 
-        entry = material_dict[name].copy()
+        # entry = material_dict[name].copy()
 
         # customisation of the library entry
         for key, value in kwargs.items():

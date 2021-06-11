@@ -6,6 +6,7 @@ import json
 import warnings
 from pathlib import Path
 from typing import Optional
+import pandas as pd
 
 try:
     import openmc
@@ -351,7 +352,11 @@ def zaid_to_isotope(zaid: str) -> str:
     return symbol + str(int(a))
 
 
-def AddMaterialFromDir(directory: str, verbose: bool = True, recursive=True):
+def AddMaterialFromDir(
+    directory: str,
+    verbose: bool = True,
+    recursive=True
+):
     """Add materials to the internal library from a directory of json files"""
     if verbose is True:
         print('searching directory', directory)
@@ -365,7 +370,11 @@ def AddMaterialFromDir(directory: str, verbose: bool = True, recursive=True):
         AddMaterialFromFile(filename, verbose)
 
 
-def AddMaterialFromFile(filename: str, verbose: Optional[bool] = True) -> None:
+def AddMaterialFromFile(
+    filename: str,
+    verbose: Optional[bool] = True,
+    library_name: Optional[str] = None
+) -> None:
     """Add materials to the internal library from a json file"""
     if verbose:
         print("Added materials to library from", filename)
@@ -373,7 +382,8 @@ def AddMaterialFromFile(filename: str, verbose: Optional[bool] = True) -> None:
         new_data = json.load(f)
         if verbose:
             print('Added material', list(new_data.keys()))
-        material_dict.update(new_data)
+        global material_df
+        material_df = material_df.append(new_data, ignore_index=True)
 
 
 def AvailableMaterials() -> dict:
@@ -420,5 +430,16 @@ def SaveMaterialsToFile(filename: str, materials: list, format='json') -> str:
 
 
 # loads the internal material library of materials
-material_dict = {}
-AddMaterialFromDir(Path(__file__).parent / "data", verbose=False)
+material_df = pd.DataFrame()
+# AddMaterialFromDir(Path(__file__).parent / "data", verbose=False)
+AddMaterialFromFile(filename = Path(__file__).parent / "data" / "pnnl_materials.json", library_name='pnnl-rev-1', verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "breeder_materials.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "breeder_materials_with_crystal_structure.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "coolant_materials.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "magnet_materials.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "moderators.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "multiplier_and_breeder_materials.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "multiplier_materials.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "plasma_material.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "pnnl_materials.json", verbose=False)
+AddMaterialFromFile(Path(__file__).parent / "data" / "structural_materials.json", verbose=False)

@@ -28,6 +28,7 @@ setuptools.setup(
     install_requires=[
         "coolprop",
         "asteval",
+        "pandas",
         # 'openmc' when pip install is available
     ],
 )
